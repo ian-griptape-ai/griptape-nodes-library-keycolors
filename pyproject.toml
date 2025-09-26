@@ -1,0 +1,22 @@
+[project]
+name = "keycolors"
+version = "0.1.0"
+description = "Key Color Extracts Node for Griptape Nodes"
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = "~=3.12"
+dependencies = [
+    "griptape-nodes","colorthief"
+]
+
+[tool.uv.sources]
+griptape-nodes = { git = "https://github.com/griptape-ai/griptape-nodes", rev="latest"}
+
+[tool.hatch.build.targets.wheel]
+packages = ["keycolors"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

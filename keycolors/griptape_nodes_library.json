@@ -1,0 +1,43 @@
+{
+  "name": "Extract Key Colors",
+  "library_schema_version": "0.1.0",
+  "metadata": {
+    "author": "Ian Massingham",
+    "description": "Node to extract key colors from an image",
+    "library_version": "0.1.0",
+    "engine_version": "0.55.0",
+    "tags": [
+      "Griptape",
+      "AI",
+      "Color",
+      "Color Extraction"
+    ],
+    "dependencies": {
+      "pip_dependencies": [
+        "colorthief"
+      ]
+    }
+  },
+  "categories": [
+    {
+      "image": {
+        "color": "border-purple-500",
+        "title": "Image",
+        "description": "Image related nodes",
+        "icon": "Image"
+      }
+    }
+  ],
+  "nodes": [
+    {
+      "class_name": "ExtractKeyColors",
+      "file_path": "extract_key_colors.py",
+      "metadata": {
+        "category": "image",
+        "description": "Extract key colors from an image.",
+        "display_name": "Extract Key Colors",
+        "group": "tasks"
+      }
+    }
+  ]
+}
