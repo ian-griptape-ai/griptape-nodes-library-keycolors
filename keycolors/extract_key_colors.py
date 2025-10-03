@@ -351,6 +351,7 @@ class ExtractKeyColors(DataNode):
                 type="str",
                 tooltip="Hex color",
                 traits={ColorPicker(format="hex")},
+                settable=False,
                 )
             )      
 
