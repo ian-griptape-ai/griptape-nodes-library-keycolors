@@ -3,8 +3,7 @@ import base64
 import uuid
 import io
 import hashlib
-from collections import Counter
-from PIL import Image 
+from PIL import Image
 
 from griptape_nodes.exe_types.core_types import Parameter, ParameterMode
 from griptape_nodes.exe_types.node_types import DataNode
@@ -14,14 +13,14 @@ from griptape_nodes.traits.color_picker import ColorPicker
 
 from griptape.artifacts import ImageArtifact, ImageUrlArtifact
 
-from colorthief import ColorThief
+from Pylette import extract_colors
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["ExtractKeyColors"]
 
 class ExtractKeyColors(DataNode):
-    """A node that extracts dominant colors from images using the ColorThief algorithm.
+    """A node that extracts dominant colors from images using Pylette's KMeans algorithm.
     
     This node analyzes an input image and extracts the most prominent colors,
     creating dynamic color picker parameters for each extracted color. The colors
@@ -161,11 +160,11 @@ class ExtractKeyColors(DataNode):
             raise ValueError(f"Failed to extract image data: {str(e)}")
 
     def _get_colors_by_prominence(self, image_bytes: bytes, num_colors: int) -> list[tuple[int, int, int]]:
-        """Extract colors using ColorThief and order them by actual prominence in the image.
+        """Extract colors using Pylette's KMeans algorithm, ordered by frequency.
         
-        This method first uses ColorThief to extract a palette of colors using its
-        sophisticated color analysis, then analyzes the actual pixel distribution
-        to order those colors by their true prominence in the image.
+        This method uses Pylette's KMeans clustering to extract the most prominent
+        colors from the image. Colors are automatically sorted by their frequency
+        in the image (most frequent first).
         
         Args:
             image_bytes: Raw image data as bytes
@@ -178,79 +177,30 @@ class ExtractKeyColors(DataNode):
             ValueError: If image processing fails
         """
         try:
-            # First, use ColorThief to extract a larger palette for analysis
+            # Convert bytes to PIL Image object
             image_io = io.BytesIO(image_bytes)
-            color_thief = ColorThief(image_io)
-            # Extract more colors than needed to have options for prominence ordering
-            palette_size = max(15, num_colors * 2)
-            colorthief_palette = color_thief.get_palette(color_count=palette_size)
+            pil_image = Image.open(image_io)
             
-            logger.debug(f"ColorThief extracted {len(colorthief_palette)} colors for prominence analysis")
+            # Convert to RGB if necessary
+            if pil_image.mode != 'RGB':
+                pil_image = pil_image.convert('RGB')
             
-            # Now analyze the image to count pixel frequencies for each ColorThief color
-            image = Image.open(io.BytesIO(image_bytes))
-            if image.mode != 'RGB':
-                image = image.convert('RGB')
+            # Extract colors using Pylette
+            palette = extract_colors(image=pil_image, palette_size=num_colors, mode='KMeans')
             
-            # Resize image for faster processing while maintaining color accuracy
-            max_size = 400
-            if image.width > max_size or image.height > max_size:
-                image.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            logger.debug(f"Pylette extracted {len(palette.colors)} colors using KMeans")
             
-            # Get all pixels for analysis
-            pixels = list(image.getdata())
-            
-            # Calculate prominence score for each ColorThief color
-            color_scores = []
-            min_distance = 30  # Distance threshold for color matching
-            
-            for ct_color in colorthief_palette:
-                r, g, b = ct_color
-                
-                # Count pixels that are close to this ColorThief color
-                pixel_count = 0
-                for pixel in pixels:
-                    pr, pg, pb = pixel
-                    # Calculate distance between pixel and ColorThief color
-                    distance = ((r - pr) ** 2 + (g - pg) ** 2 + (b - pb) ** 2) ** 0.5
-                    if distance <= min_distance:
-                        pixel_count += 1
-                
-                color_scores.append((ct_color, pixel_count))
-                logger.debug(f"ColorThief color RGB({r:3d}, {g:3d}, {b:3d}) matches {pixel_count} pixels")
-            
-            # Sort by pixel count (prominence) in descending order
-            color_scores.sort(key=lambda x: x[1], reverse=True)
-            
-            # Extract the top colors and ensure diversity
+            # Convert Pylette Color objects to RGB tuples
             selected_colors = []
-            for color, count in color_scores:
-                if len(selected_colors) >= num_colors:
-                    break
-                    
-                r, g, b = color
-                
-                # Check if this color is too similar to already selected colors
-                is_similar = False
-                for existing_color in selected_colors:
-                    er, eg, eb = existing_color
-                    distance = ((r - er) ** 2 + (g - eg) ** 2 + (b - eb) ** 2) ** 0.5
-                    if distance < min_distance:
-                        is_similar = True
-                        break
-                
-                if not is_similar:
-                    selected_colors.append(color)
-                    logger.debug(f"Selected prominent ColorThief color: RGB({r:3d}, {g:3d}, {b:3d}) - {count} pixels")
+            for color in palette.colors:
+                r, g, b = color.rgb
+                selected_colors.append((r, g, b))
+                logger.debug(f"Selected color: RGB({r:3d}, {g:3d}, {b:3d}) - frequency: {color.freq:.2%}")
             
-            return selected_colors[:num_colors]
+            return selected_colors
             
         except Exception as e:
-            logger.warning(f"Prominence-based ColorThief ordering failed: {e}, using default ColorThief palette")
-            # Fallback to standard ColorThief if our analysis fails
-            image_io = io.BytesIO(image_bytes)
-            color_thief = ColorThief(image_io)
-            return color_thief.get_palette(color_count=num_colors)
+            raise ValueError(f"Pylette color extraction failed: {str(e)}")
 
     def _clear_color_picker_parameters(self) -> None:
         """Clear all dynamically created color picker parameters.
@@ -284,15 +234,14 @@ class ExtractKeyColors(DataNode):
         1. Clears any existing color parameters from previous runs
         2. Retrieves the input image and target number of colors
         3. Converts the image artifact to bytes for processing
-        4. Uses ColorThief to extract a sophisticated color palette
-        5. Analyzes pixel frequency to order ColorThief colors by prominence
-        6. Filters out similar colors to ensure diversity
-        7. Creates dynamic color picker parameters for each selected color
-        8. Logs color information for inspection
+        4. Uses Pylette's KMeans algorithm to extract dominant colors
+        5. Colors are automatically ordered by frequency (most prominent first)
+        6. Creates dynamic color picker parameters for each extracted color
+        7. Logs color information for inspection
         
-        The algorithm combines ColorThief's sophisticated color analysis with
-        prominence-based ordering. ColorThief extracts high-quality colors, then
-        pixel frequency analysis orders them by actual dominance in the image.
+        The algorithm uses Pylette's KMeans clustering to identify the most
+        prominent colors in the image. Pylette handles color extraction,
+        frequency calculation, and diversity automatically.
         
         The selected colors are made available as dynamic output parameters
         named color_1, color_2, etc., each containing the hexadecimal color value
@@ -300,7 +249,7 @@ class ExtractKeyColors(DataNode):
         
         Raises:
             ValueError: If image processing fails or no colors can be extracted
-            Exception: If ColorThief processing encounters an error
+            Exception: If Pylette processing encounters an error
         """
         self._clear_color_picker_parameters()
         

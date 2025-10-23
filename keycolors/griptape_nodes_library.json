@@ -14,7 +14,7 @@
     ],
     "dependencies": {
       "pip_dependencies": [
-        "colorthief"
+        "Pylette"
       ]
     }
   },
