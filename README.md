@@ -1,27 +1,27 @@
 # Extract Key Colors Node Library
 
-A Griptape node library for extracting dominant colors from images using advanced color analysis and prominence-based ordering.
+A Griptape node library for extracting dominant colors from images using Pylette's KMeans clustering algorithm.
 
 ## Overview
 
-The ExtractKeyColors node analyzes input images to extract the most prominent colors, creating dynamic color picker parameters for each extracted color. The node combines ColorThief's sophisticated color analysis with pixel frequency analysis to ensure colors are ordered by their actual dominance in the image.
+The ExtractKeyColors node analyzes input images to extract the most prominent colors, creating dynamic color picker parameters for each extracted color. The node uses Pylette's KMeans clustering algorithm which automatically orders colors by their frequency in the image.
 
 ## Features
 
-- **Hybrid Color Extraction**: Combines ColorThief's advanced color analysis with prominence-based ordering
-- **True Dominance Ordering**: Colors are ordered by actual pixel frequency in the image
+- **KMeans Clustering**: Uses Pylette's optimized KMeans algorithm for perceptual color extraction
+- **Automatic Frequency Sorting**: Colors are automatically ordered by their prominence in the image
 - **Dynamic Parameters**: Creates color picker UI components for each extracted color
 - **Flexible Input Support**: Handles ImageArtifact, ImageUrlArtifact, and dictionary formats
 - **Configurable Color Count**: Extract 1-12 colors as needed
-- **Automatic Deduplication**: Filters out similar colors to ensure diversity
-- **Robust Error Handling**: Graceful fallbacks and comprehensive error reporting
+- **Built-in Color Diversity**: Pylette ensures extracted colors are distinct and representative
+- **Robust Error Handling**: Comprehensive error reporting with detailed messages
 
 ## How It Works
 
-1. **ColorThief Extraction**: Uses ColorThief to extract a sophisticated color palette
-2. **Prominence Analysis**: Analyzes pixel distribution to determine actual color dominance
-3. **Intelligent Ordering**: Orders ColorThief colors by their true prominence in the image
-4. **Diversity Filtering**: Ensures selected colors are sufficiently different from each other
+1. **Image Conversion**: Converts input image to PIL Image format and ensures RGB color space
+2. **KMeans Clustering**: Uses Pylette's KMeans algorithm to identify dominant color clusters
+3. **Automatic Ordering**: Colors are automatically sorted by frequency (most prominent first)
+4. **Color Diversity**: Pylette ensures extracted colors are distinct and representative
 5. **Dynamic UI Creation**: Generates color picker parameters for each extracted color
 
 ## Parameters
@@ -46,13 +46,13 @@ Dynamic color picker parameters are created for each extracted color:
 
 ## Algorithm Details
 
-The node uses a hybrid approach that combines the best of both worlds:
+The node uses Pylette's KMeans clustering algorithm for optimal color extraction:
 
-1. **ColorThief Analysis**: Leverages ColorThief's sophisticated color clustering and perceptual analysis
-2. **Pixel Frequency Counting**: Analyzes actual pixel distribution to determine true prominence
-3. **Distance-Based Matching**: Uses Euclidean distance in RGB space to match pixels to ColorThief colors
-4. **Diversity Enforcement**: Ensures minimum color distance (30 RGB units) between selected colors
-5. **Performance Optimization**: Resizes large images to 400px for faster processing while maintaining accuracy
+1. **KMeans Clustering**: Groups similar pixels into clusters to identify dominant colors
+2. **Perceptual Grouping**: Colors are selected based on perceptual similarity and distribution
+3. **Frequency Analysis**: Each color includes its frequency/prominence in the image
+4. **Automatic Diversity**: Pylette ensures selected colors are distinct and representative
+5. **Optimized Processing**: Efficient algorithm handles images of various sizes effectively
 
 ## Use Cases
 
@@ -64,17 +64,17 @@ The node uses a hybrid approach that combines the best of both worlds:
 
 ## Technical Specifications
 
+- **Algorithm**: KMeans clustering via Pylette library
 - **Color Space**: RGB (0-255 per channel)
 - **Output Format**: Hexadecimal color codes (#RRGGBB)
-- **Processing Size**: Images resized to max 400px for analysis (maintains aspect ratio)
-- **Color Distance**: Minimum 30 RGB units between selected colors
-- **Fallback Behavior**: Graceful degradation to standard ColorThief if prominence analysis fails
+- **Sorting**: Automatic frequency-based ordering (most prominent first)
+- **Color Diversity**: Automatic distinctiveness enforcement by Pylette
 
 ## Installation
 
 This library requires the following dependencies:
-- `colorthief`: For sophisticated color palette extraction
-- `Pillow`: For image processing and analysis
+- `Pylette`: For KMeans-based color palette extraction
+- `Pillow`: For image processing and format conversion
 - `griptape-nodes`: Core Griptape nodes framework
 
 ## Example Output
@@ -88,10 +88,10 @@ Color 3: RGB(213,   9,  18) | Hex: #d50912  (Third most prominent)
 ## Debug Information
 
 When debug logging is enabled, the node provides detailed information about:
-- ColorThief palette extraction results
-- Pixel frequency analysis for each color
-- Color selection and filtering decisions
-- Performance metrics and processing steps
+- Pylette KMeans extraction results
+- Frequency/prominence data for each color
+- RGB values and hexadecimal color codes
+- Image processing and conversion steps
 
 ## Error Handling
 
@@ -99,16 +99,16 @@ The node includes comprehensive error handling for:
 - Invalid or corrupted image data
 - Unsupported image formats
 - Network issues with ImageUrlArtifact
-- ColorThief processing failures
-- Memory constraints with large images
+- Pylette processing failures
+- Image conversion and color space issues
 
 ## Performance Considerations
 
-- Images are automatically resized for optimal processing speed
-- Color analysis is optimized for accuracy vs. performance balance
-- Memory usage is managed through efficient pixel processing
-- Fallback mechanisms ensure reliable operation
+- Pylette's KMeans algorithm is optimized for speed and accuracy
+- Efficient clustering handles images of various sizes
+- Automatic color space conversion ensures compatibility
+- Clean, maintainable implementation with minimal complexity
 
 ---
 
-This node provides a professional-grade solution for color extraction that combines sophisticated analysis with practical usability, making it ideal for both creative and technical workflows.
+This node provides a professional-grade solution for color extraction using modern, actively-maintained libraries, making it ideal for both creative and technical workflows.
