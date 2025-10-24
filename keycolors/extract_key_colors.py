@@ -13,11 +13,15 @@ from griptape_nodes.traits.color_picker import ColorPicker
 
 from griptape.artifacts import ImageArtifact, ImageUrlArtifact
 
-from Pylette import extract_colors
+from Pylette import extract_colors  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
 __all__ = ["ExtractKeyColors"]
+
+# Constants
+DEBUG_ID_LENGTH = 50  # Maximum length for debug image IDs
+
 
 class ExtractKeyColors(DataNode):
     """A node that extracts dominant colors from images using Pylette's KMeans algorithm.
@@ -122,7 +126,7 @@ class ExtractKeyColors(DataNode):
         url = GriptapeNodes.StaticFilesManager().save_static_file(image_bytes, f"{uuid.uuid4()}.{image_format}")
         return ImageUrlArtifact(url)
 
-    def _image_to_bytes(self, image_artifact) -> bytes:
+    def _image_to_bytes(self, image_artifact: ImageArtifact | ImageUrlArtifact | dict) -> bytes:
         """Convert ImageArtifact, ImageUrlArtifact, or dict representation to bytes.
         
         Args:
@@ -135,29 +139,24 @@ class ExtractKeyColors(DataNode):
             ValueError: If image artifact is invalid or unsupported
         """
         if not image_artifact:
-            raise ValueError("No input image provided")
+            msg = "No input image provided"
+            raise ValueError(msg)
         
         try:
             # Handle dictionary format (serialized artifacts)
             if isinstance(image_artifact, dict):
                 # Convert dict to ImageUrlArtifact first
                 image_url_artifact = self._dict_to_image_url_artifact(image_artifact)
-                image_bytes = image_url_artifact.to_bytes()
+                return image_url_artifact.to_bytes()
             # Handle artifact objects directly
-            elif isinstance(image_artifact, (ImageArtifact, ImageUrlArtifact)):
-                image_bytes = image_artifact.to_bytes()
-            else:
-                # Try to convert to bytes if it's a different artifact type
-                image_bytes = image_artifact.to_bytes()
-            
-            # Verify we have image data
-            if not image_bytes or len(image_bytes) < 100:
-                raise ValueError("Image data is empty or too small")
-            
-            return image_bytes
+            if isinstance(image_artifact, (ImageArtifact, ImageUrlArtifact)):
+                return image_artifact.to_bytes()
+            # Try to convert to bytes if it's a different artifact type
+            return image_artifact.to_bytes()
             
         except Exception as e:
-            raise ValueError(f"Failed to extract image data: {str(e)}")
+            msg = f"Failed to extract image data: {e!s}"
+            raise ValueError(msg) from e
 
     def _get_colors_by_prominence(self, image_bytes: bytes, num_colors: int) -> list[tuple[int, int, int]]:
         """Extract colors using Pylette's KMeans algorithm, ordered by frequency.
@@ -188,19 +187,20 @@ class ExtractKeyColors(DataNode):
             # Extract colors using Pylette
             palette = extract_colors(image=pil_image, palette_size=num_colors, mode='KMeans')
             
-            logger.debug(f"Pylette extracted {len(palette.colors)} colors using KMeans")
+            logger.debug("Pylette extracted %d colors using KMeans", len(palette.colors))
             
             # Convert Pylette Color objects to RGB tuples
             selected_colors = []
             for color in palette.colors:
                 r, g, b = color.rgb
                 selected_colors.append((r, g, b))
-                logger.debug(f"Selected color: RGB({r:3d}, {g:3d}, {b:3d}) - frequency: {color.freq:.2%}")
-            
-            return selected_colors
+                logger.debug("Selected color: RGB(%3d, %3d, %3d) - frequency: %.2f%%", r, g, b, color.freq * 100)
             
         except Exception as e:
-            raise ValueError(f"Pylette color extraction failed: {str(e)}")
+            msg = f"Pylette color extraction failed: {e!s}"
+            raise ValueError(msg) from e
+        else:
+            return selected_colors
 
     def _clear_color_picker_parameters(self) -> None:
         """Clear all dynamically created color picker parameters.
