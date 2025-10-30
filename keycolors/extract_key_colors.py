@@ -21,6 +21,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# Maximum number of colors that can be extracted
+MAX_COLORS = 12
+
 class ExtractKeyColors(DataNode):
     """A node that extracts dominant colors from images using Pylette's color extraction algorithms.
     
@@ -77,7 +80,7 @@ class ExtractKeyColors(DataNode):
                 name="num_colors",
                 tooltip="Target number of colors to extract",
                 type=ParameterTypeBuiltin.INT.value,
-                traits={Slider(min_val=1,max_val=12)},
+                traits={Slider(min_val=1,max_val=MAX_COLORS)},
                 default_value=3,
                 allowed_modes=[ParameterMode.INPUT,ParameterMode.PROPERTY],
                 ui_options={"display_name":"Target Number of Colors"},
@@ -196,8 +199,8 @@ class ExtractKeyColors(DataNode):
         The method safely checks for parameter existence before attempting removal
         to avoid errors if parameters don't exist.
         """
-        # Clear all color parameters that might exist (up to 15 since we extract max 15)
-        for i in range(1, 16):  # Clear up to color_15 to be safe
+        # Clear all color parameters that might exist (up to MAX_COLORS)
+        for i in range(1, MAX_COLORS + 1):  # Clear up to color_{MAX_COLORS} to be safe
             param_name = f"color_{i}"
             if self.get_parameter_by_name(param_name) is not None:
                 logger.debug(f"Removing existing parameter: {param_name}")
