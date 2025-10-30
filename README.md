@@ -1,14 +1,14 @@
 # Extract Key Colors Node Library
 
-A Griptape node library for extracting dominant colors from images using Pylette's Median Cut algorithm.
+A Griptape node library for extracting dominant colors from images using Pylette's color extraction algorithms.
 
 ## Overview
 
-The ExtractKeyColors node analyzes input images to extract the most prominent colors, creating dynamic color picker parameters for each extracted color. The node uses Pylette's Median Cut algorithm which automatically orders colors by their frequency in the image.
+The ExtractKeyColors node analyzes input images to extract the most prominent colors, creating dynamic color picker parameters for each extracted color. The node supports both KMeans and MedianCut algorithms via Pylette, with colors automatically ordered by their frequency in the image.
 
 ## Features
 
-- **Median Cut Algorithm**: Uses Pylette's optimized Median Cut algorithm for perceptual color extraction
+- **Dual Algorithm Support**: Choose between KMeans clustering and MedianCut algorithms for color extraction
 - **Automatic Frequency Sorting**: Colors are automatically ordered by their prominence in the image
 - **Dynamic Parameters**: Creates color picker UI components for each extracted color
 - **Flexible Input Support**: Handles ImageArtifact, ImageUrlArtifact, and dictionary formats
@@ -19,23 +19,30 @@ The ExtractKeyColors node analyzes input images to extract the most prominent co
 ## How It Works
 
 1. **Image Conversion**: Converts input image to PIL Image format and ensures RGB color space
-2. **Median Cut Algorithm**: Uses Pylette's Median Cut algorithm to identify dominant color regions
-3. **Automatic Ordering**: Colors are automatically sorted by frequency (most prominent first)
-4. **Color Diversity**: Pylette ensures extracted colors are distinct and representative
-5. **Dynamic UI Creation**: Generates color picker parameters for each extracted color
+2. **Algorithm Selection**: Choose between KMeans clustering or MedianCut algorithms for color extraction
+3. **Color Extraction**: Uses the selected Pylette algorithm to identify dominant color regions
+4. **Automatic Ordering**: Colors are automatically sorted by frequency (most prominent first)
+5. **Color Diversity**: Pylette ensures extracted colors are distinct and representative
+6. **Dynamic UI Creation**: Generates color picker parameters for each extracted color
 
 ## Parameters
 
 ### Input Parameters
 
 - **input_image** (ImageUrlArtifact/ImageArtifact): The source image to analyze
-  - Supports common formats: JPG, PNG, GIF, BMP, TIFF, ICO, WEBP
+  - Supports all PIL-compatible formats: PNG, JPEG, JPG, WEBP, GIF, BMP, TIFF, TGA, ICO, and more
   - File browser integration for easy image selection
 
 - **num_colors** (Integer): Target number of colors to extract
   - Range: 1-12 colors
   - Default: 3 colors
   - Slider UI for easy selection
+
+- **algorithm** (String): Color extraction algorithm to use
+  - Options: "KMeans" (default) or "MedianCut"
+  - Dropdown selection for easy switching
+  - KMeans: Uses clustering to identify dominant color groups
+  - MedianCut: Uses recursive color space division for balanced color selection
 
 ### Output Parameters
 
@@ -46,13 +53,21 @@ Dynamic color picker parameters are created for each extracted color:
 
 ## Algorithm Details
 
-The node uses Pylette's Median Cut algorithm for optimal color extraction:
+The node supports two Pylette algorithms for optimal color extraction:
 
-1. **Median Cut Algorithm**: Recursively divides the color space to identify dominant color regions
-2. **Balanced Distribution**: Colors are selected to represent the full spectrum of the image
+### KMeans Algorithm (Default)
+1. **Clustering Approach**: Uses K-means clustering to group similar colors together
+2. **Dominant Groups**: Identifies the most prominent color clusters in the image
 3. **Frequency Analysis**: Each color includes its frequency/prominence in the image
-4. **Automatic Diversity**: Pylette ensures selected colors are distinct and representative
-5. **Optimized Processing**: Efficient algorithm handles images of various sizes effectively
+4. **Versatile**: Works well for general-purpose color extraction across various image types
+
+### MedianCut Algorithm
+1. **Recursive Division**: Recursively divides the color space to identify dominant color regions
+2. **Balanced Distribution**: Colors are selected to represent the full spectrum of the image
+3. **Perceptual Quality**: Optimized for perceptually distinct and representative colors
+4. **Efficient Processing**: Fast algorithm that handles images of various sizes effectively
+
+Both algorithms automatically ensure color diversity and prominence-based ordering.
 
 ## Use Cases
 
@@ -64,16 +79,17 @@ The node uses Pylette's Median Cut algorithm for optimal color extraction:
 
 ## Technical Specifications
 
-- **Algorithm**: Median Cut via Pylette library
+- **Algorithms**: KMeans clustering and MedianCut via Pylette library
 - **Color Space**: RGB (0-255 per channel)
 - **Output Format**: Hexadecimal color codes (#RRGGBB)
 - **Sorting**: Automatic frequency-based ordering (most prominent first)
 - **Color Diversity**: Automatic distinctiveness enforcement by Pylette
+- **Algorithm Selection**: Runtime selection via dropdown parameter
 
 ## Installation
 
 This library requires the following dependencies:
-- `Pylette`: For Median Cut-based color palette extraction
+- `Pylette`: For KMeans and MedianCut-based color palette extraction
 - `Pillow`: For image processing and format conversion
 - `griptape-nodes`: Core Griptape nodes framework
 
@@ -88,7 +104,7 @@ Color 3: RGB(213,   9,  18) | Hex: #d50912  (Third most prominent)
 ## Debug Information
 
 When debug logging is enabled, the node provides detailed information about:
-- Pylette Median Cut extraction results
+- Selected algorithm (KMeans or MedianCut) and extraction results
 - Frequency/prominence data for each color
 - RGB values and hexadecimal color codes
 - Image processing and conversion steps
@@ -104,8 +120,9 @@ The node includes comprehensive error handling for:
 
 ## Performance Considerations
 
-- Pylette's Median Cut algorithm is optimized for speed and accuracy
-- Efficient recursive division handles images of various sizes
+- Both KMeans and MedianCut algorithms are optimized for speed and accuracy
+- KMeans clustering efficiently handles complex color distributions
+- MedianCut's recursive division handles images of various sizes effectively
 - Automatic color space conversion ensures compatibility
 - Clean, maintainable implementation with minimal complexity
 
