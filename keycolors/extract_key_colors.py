@@ -1,8 +1,5 @@
 import logging
-import base64
-import uuid
 import io
-import hashlib
 from PIL import Image
 
 from griptape_nodes.exe_types.core_types import Parameter, ParameterMode
@@ -16,9 +13,13 @@ from griptape.artifacts import ImageArtifact, ImageUrlArtifact
 
 from Pylette import extract_colors
 
-logger = logging.getLogger(__name__)
+try:
+    from griptape_nodes_library.utils.image_utils import dict_to_image_url_artifact, SUPPORTED_PIL_FORMATS
+except ImportError:
+    # Fallback for different library structures
+    from ..utils.image_utils import dict_to_image_url_artifact, SUPPORTED_PIL_FORMATS
 
-__all__ = ["ExtractKeyColors"]
+logger = logging.getLogger(__name__)
 
 class ExtractKeyColors(DataNode):
     """A node that extracts dominant colors from images using Pylette's color extraction algorithms.
@@ -63,7 +64,7 @@ class ExtractKeyColors(DataNode):
                 "display_name":"Input Image",
                 "clickable_file_browser":True,
                 "file_browser_options":{
-                    "extensions":["jpg","jpeg","png","gif","bmp","tiff","ico","webp"],
+                    "extensions":[fmt.lower() for fmt in SUPPORTED_PIL_FORMATS],
                     "allow_multiple":False,
                     "allow_directories":False
                 }
@@ -95,47 +96,6 @@ class ExtractKeyColors(DataNode):
             )
         )
    
-    def _dict_to_image_url_artifact(self, image_dict: dict, image_format: str | None = None) -> ImageUrlArtifact:
-        """Convert a dictionary representation of an image to an ImageUrlArtifact.
-        
-        This method handles serialized image artifacts that come as dictionaries,
-        typically when artifacts are passed between nodes in the workflow system.
-        It supports both direct URL references and base64-encoded image data.
-        
-        Args:
-            image_dict: Dictionary containing image data with 'value' and 'type' keys
-            image_format: Optional format override (e.g., 'png', 'jpg'). If None,
-                         format is inferred from MIME type or defaults to 'png'
-        
-        Returns:
-            ImageUrlArtifact: A URL-based image artifact that can be processed
-            
-        Raises:
-            KeyError: If required dictionary keys are missing
-            ValueError: If base64 decoding fails or image data is invalid
-        """
-        from griptape_nodes.retained_mode.griptape_nodes import GriptapeNodes
-        
-        value = image_dict["value"]
-        if image_dict.get("type") == "ImageUrlArtifact":
-            return ImageUrlArtifact(value)
-
-        # Strip base64 prefix if needed
-        if "base64," in value:
-            value = value.split("base64,")[1]
-
-        image_bytes = base64.b64decode(value)
-
-        # Infer format from MIME type if not specified
-        if image_format is None:
-            if "type" in image_dict:
-                mime_format = image_dict["type"].split("/")[1] if "/" in image_dict["type"] else None
-                image_format = mime_format
-            else:
-                image_format = "png"
-
-        url = GriptapeNodes.StaticFilesManager().save_static_file(image_bytes, f"{uuid.uuid4()}.{image_format}")
-        return ImageUrlArtifact(url)
 
     def _image_to_bytes(self, image_artifact) -> bytes:
         """Convert ImageArtifact, ImageUrlArtifact, or dict representation to bytes.
@@ -156,7 +116,7 @@ class ExtractKeyColors(DataNode):
             # Handle dictionary format (serialized artifacts)
             if isinstance(image_artifact, dict):
                 # Convert dict to ImageUrlArtifact first
-                image_url_artifact = self._dict_to_image_url_artifact(image_artifact)
+                image_url_artifact = dict_to_image_url_artifact(image_artifact)
                 image_bytes = image_url_artifact.to_bytes()
             # Handle artifact objects directly
             elif isinstance(image_artifact, (ImageArtifact, ImageUrlArtifact)):
@@ -301,9 +261,8 @@ class ExtractKeyColors(DataNode):
         logger.debug(f"Extracting {num_colors} colors from input image using {algorithm} algorithm")
         image_bytes = self._image_to_bytes(input_image)
         
-        # Debug: Create hash to detect if the same image data is being processed
-        image_hash = hashlib.md5(image_bytes).hexdigest()[:8]
-        logger.debug(f"Image data hash: {image_hash} (size: {len(image_bytes)} bytes)")
+        # Debug: Log image size (MD5 hash removed as it's expensive)
+        logger.debug(f"Image data size: {len(image_bytes)} bytes")
         
         # Extract colors ordered by actual prominence in the image
         selected_colors = self._get_colors_by_algorithm(image_bytes, num_colors, algorithm)
