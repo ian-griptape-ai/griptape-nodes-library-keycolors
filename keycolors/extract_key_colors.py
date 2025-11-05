@@ -9,15 +9,12 @@ from griptape_nodes.traits.slider import Slider
 from griptape_nodes.traits.color_picker import ColorPicker
 from griptape_nodes.traits.options import Options
 
+from griptape_nodes_library.utils.image_utils import dict_to_image_url_artifact, SUPPORTED_PIL_FORMATS
+
 from griptape.artifacts import ImageArtifact, ImageUrlArtifact
 
 from Pylette import extract_colors
 
-try:
-    from griptape_nodes_library.utils.image_utils import dict_to_image_url_artifact, SUPPORTED_PIL_FORMATS
-except ImportError:
-    # Fallback for different library structures
-    from ..utils.image_utils import dict_to_image_url_artifact, SUPPORTED_PIL_FORMATS
 
 logger = logging.getLogger(__name__)
 
