@@ -86,9 +86,36 @@ Both algorithms automatically ensure color diversity and prominence-based orderi
 - **Color Diversity**: Automatic distinctiveness enforcement by Pylette
 - **Algorithm Selection**: Runtime selection via dropdown parameter
 
-## Installation
+## 📦 Installation
 
-This library requires the following dependencies:
+### Prerequisites
+
+- [Griptape Nodes](https://github.com/griptape-ai/griptape-nodes) installed and running
+
+### Install the Library
+
+1. **Download the library files** to your Griptape Nodes libraries directory:
+   ```bash
+   # Navigate to your Griptape Nodes libraries directory
+   cd `gtn config show workspace_directory`
+   
+   # Clone or download this library
+   git clone https://github.com/your-username/griptape-nodes-library-keycolors.git
+   ```
+
+2. **Add the library** in the Griptape Nodes Editor:
+   * Open the Settings menu and navigate to the *Libraries* settings
+   * Click on *+ Add Library* at the bottom of the settings panel
+   * Enter the path to the library JSON file: **your Griptape Nodes Workspace directory**`/griptape-nodes-library-keycolors/keycolors/griptape_nodes_library.json`
+   * You can check your workspace directory with `gtn config show workspace_directory`
+   * Close the Settings Panel
+   * Click on *Refresh Libraries*
+
+3. **Verify installation** by checking that the ExtractKeyColors node appears in your Griptape Nodes interface under the "Image/KeyColors" category.
+
+### Dependencies
+
+This library automatically installs the following dependencies:
 - `Pylette`: For KMeans and MedianCut-based color palette extraction
 - `Pillow`: For image processing and format conversion
 - `griptape-nodes`: Core Griptape nodes framework
